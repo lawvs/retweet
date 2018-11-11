@@ -73,7 +73,7 @@ def init():
 
 def filterTweet(l) -> list:
     # filter photo
-    # l = filter(tweet.hasImage, l)  # tweet contains photo
+    l = filter(tweet.hasImage, l)  # tweet contains photo
     l = list(l)
     return l
 
