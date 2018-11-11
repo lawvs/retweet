@@ -25,6 +25,12 @@ if config.DEBUG:
     logger.setLevel(logging.DEBUG)
 logger.info('Loaded config: {}'.format(str(config)))
 
+if config.TELEGRAM_LOG:
+    from TelegramLogging import TelegramHanlder
+    tgHandler = TelegramHanlder(config.TELEGRAM_TOKEN, config.TELEGRAM_CHATID,
+                                name=config.TELEGRAM_LOG_NAME, proxy=config.PROXY)
+    tgHandler.setLevel(config.TELEGRAM_LOG_LEVEL)
+    logging.getLogger().addHandler(tgHandler)
 
 weiboClient = None
 tweetClient = None

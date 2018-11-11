@@ -34,6 +34,14 @@ class Config(object):
     WEIBO_PASSWORD = None
     WEIBO_FORMAT = '{text}' # 转发微博的格式 *Optional
 
+    # TG LOG
+    # OPTIONAL
+    TELEGRAM_LOG = False
+    TELEGRAM_LOG_NAME = 'App Dev'
+    TELEGRAM_LOG_LEVEL = __import__('logging').WARN
+    TELEGRAM_TOKEN = None
+    TELEGRAM_CHATID = None
+
     @staticmethod
     def init_app(app):
         pass
