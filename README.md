@@ -32,7 +32,7 @@
 - `WEIBO_REDIRECT_URI`微博应用地址
 - `WEIBO_ACCESS_TOKEN`微博认证时需要的access token（选填）
 - `WEIBO_USERNAME`和`WEIBO_PASSWORD`使用username/password进行认证
-- `WEIBO_PREFIX`发的微博加的前缀（选填）
+- `WEIBO_FORMAT`发的微博格式（选填）
 
 ## 其他问题
 
