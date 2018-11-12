@@ -43,7 +43,7 @@ def initHttp(proxy=None):
 
 def filterTime(tweet, now, interval) -> bool:
     created_at = time.strptime(
-        tweet['created_at'], '%a %b %d %H:%M:%S +0000 %Y')
+        tweet['created_at'], '%a %b %d %H:%M:%S %z %Y')
     diff = time.mktime(now) - time.mktime(created_at)  # second
     if diff >= interval:
         return False
