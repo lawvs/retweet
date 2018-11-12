@@ -90,9 +90,9 @@ def loop():
     if len(l) <= 0:
         return
 
-    for tweet in l:
+    for t in l:
         url = 'https://twitter.com/{}/status/{}'.format(
-            tweetClient.screenName, tweet.get('id'))
+            tweetClient.screenName, t.get('id'))
         logger.info('new tweet - {}'.format(url))
 
     l = filterTweet(l)
