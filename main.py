@@ -3,6 +3,7 @@
 import os
 import sys
 import time
+import datetime
 import logging
 from config import config
 from weibo import Client as WeiboClient
@@ -65,30 +66,51 @@ def init():
     logger.info('Monitoring {}'.format(tweetClient.screenName))
 
 
-def postWeibo(text, pic=None):
-    status = '{prefix}{text}{redirect}'.format(
-        prefix=config.WEIBO_PREFIX, text=text, redirect=config.WEIBO_REDIRECT_URI)  # duplicate
-    if len(status) > 140:
-        logger.debug('input text more than 140 characters ' + str(len(text)))
-        text = text[0:(140 - len(status) - 3)] + '...'
-        status = '{prefix}{text}{redirect}'.format(
-            prefix=config.WEIBO_PREFIX, text=text, redirect=config.WEIBO_REDIRECT_URI)  # duplicate
-    logger.info('share weibo... - {}'.format(status))
-    resp = weiboClient.shareWeibo(status, pic)
-    logger.debug('shareWeibo resp - ' + str(resp))
-
-
-def filterTweet(l):
+def filterTweet(l) -> list:
     # filter photo
     # l = filter(tweet.hasImage, l)  # tweet contains photo
     l = list(l)
     return l
 
 
+def formatTweet(t):
+    '''
+    return: tweet.full_text, extended_entities.photo
+    '''
+    text = t.get('full_text')
+    media = t.get('extended_entities', {}).get('media', {})
+    media = filter(lambda media: media.get('type') == 'photo', media)
+    photoList = list(map(lambda media: media.get('media_url_https'), media))
+
+    url = 'https://twitter.com/{}/status/{}'.format(
+        tweetClient.screenName, t.get('id'))
+    # logger.info('photo tweet -> {}'.format(url))
+    if len(photoList) > 1:
+        logging.warn('tweet 图片数量超过一张 -> {}'.format(url))
+    if len(photoList) <= 0:
+        pic = None
+    else:
+        pic = tweet.getPhoto(photoList[0], proxy=config.PROXY)
+
+    tz_utc_8 = datetime.timezone(datetime.timedelta(hours=8))
+    tweetTime = datetime.datetime.strptime(
+        t.get('created_at'), '%a %b %d %H:%M:%S %z %Y')
+    tweetTime = tweetTime.astimezone(tz_utc_8)  # change timezone
+    timeStr = tweetTime.strftime('%Y.%m.%d %H:%M:%S')
+    # format weibo
+
+    def formatter(str): return config.WEIBO_FORMAT.format(
+        text=str, time=timeStr)
+    status = formatter(text)
+    if len(status) > 140:
+        logger.debug('input text more than 140 characters ' + str(len(text)))
+        text = text[0:(140 - len(status) - 3)] + '...'
+        status = formatter(text)
+    return status, pic
+
+
 def loop():
     l = tweetClient.getNewTweets()
-    if len(l) <= 0:
-        return
 
     for t in l:
         url = 'https://twitter.com/{}/status/{}'.format(
@@ -96,24 +118,14 @@ def loop():
         logger.info('new tweet - {}'.format(url))
 
     l = filterTweet(l)
-    l = map(tweet.mapPhotoList, l)  # simplify obj
-    l = list(l)
     if len(l) <= 0:
         return
 
-    for d in l:
-        text = d.get('full_text')
-        photoList = d.get('photoList')
-        if len(photoList) <= 0:
-            return
-
-        url = 'https://twitter.com/{}/status/{}'.format(
-            tweetClient.screenName, d.get('id'))
-        # logger.info('photo tweet -> {}'.format(url))
-        if len(photoList) > 1:
-            logging.warn('tweet 图片数量超过一张 -> {}'.format(url))
-        pic = tweet.getPhoto(photoList[0], proxy=config.PROXY)
-        postWeibo(text, pic)
+    for t in l:
+        status, pic = formatTweet(t)
+        logger.info('share weibo... - {}'.format(status))
+        resp = weiboClient.shareWeibo(status, pic)
+        logger.debug('shareWeibo resp - ' + str(resp))
 
 
 def main():

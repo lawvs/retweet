@@ -30,7 +30,7 @@ class Config(object):
     WEIBO_ACCESS_TOKEN = None  # access token
     WEIBO_USERNAME = None
     WEIBO_PASSWORD = None
-    WEIBO_PREFIX = ''  # 转发微博的前缀 *Optional
+    WEIBO_FORMAT = '{text}' # 转发微博的格式 *Optional
 
     @staticmethod
     def init_app(app):

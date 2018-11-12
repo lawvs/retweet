@@ -60,20 +60,6 @@ def hasImage(tweet) -> bool:
     return any(media['type'] == 'photo' for media in tweet['extended_entities']['media'])
 
 
-def mapPhotoList(tweet) -> dict:
-    '''
-    return the list of images in tweet
-    '''
-    media = tweet.get('extended_entities', {}).get('media', {})
-    media = filter(lambda media: media.get('type') == 'photo', media)
-    photoList = list(map(lambda media: media.get('media_url_https'), media))
-    return {
-        'id': tweet.get('id'),
-        'full_text': tweet.get('full_text'),
-        'photoList': photoList,
-    }
-
-
 def getPhoto(url, proxy=None):
     http = initHttp(proxy)
     resp = http.request('GET', url)
