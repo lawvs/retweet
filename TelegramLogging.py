@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import urllib3
+import traceback
 import certifi
 
 
@@ -44,7 +45,10 @@ class TelegramHanlder(logging.Handler):
 
     def emit(self, record):
         # text = self.format(record)
-        text = '[{}] {}: {}'.format(self.name, record.levelname, record.msg)
+        tb = ''.join(traceback.format_exception(
+            *record.exc_info)) if record.exc_info else ''
+        text = '[{}] {}: {} {}'.format(
+            self.name, record.levelname, record.msg, tb)
         try:
             self.sendMessage(text)
         except Exception as e:
