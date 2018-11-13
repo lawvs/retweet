@@ -3,15 +3,20 @@ import json
 import logging
 import urllib3
 import traceback
-import certifi
 
 
 def initHttp(proxy=None):
     if not proxy:
-        # http = urllib3.PoolManager()
-        http = urllib3.PoolManager(
-            cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-        return http
+        try:
+            import certifi
+            http = urllib3.PoolManager(
+                cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+            return http
+        except ImportError:
+            logging.warn(
+                'certifi ImportError, Please install certifi. "pip install certifi"')
+            http = urllib3.PoolManager()
+            return http
 
     if proxy.startswith('http'):
         http = urllib3.ProxyManager(proxy)
