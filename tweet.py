@@ -143,12 +143,12 @@ class Tweet(object):
         tweets = json.loads(resp.data.decode('utf-8'))
         status = resp.status
         if not tweets or status != 200:
-            if status == 401:
-                logging.error('Could not fetch tweets: unauthorized access.')
-        ratelimit = int(resp.headers['x-rate-limit-limit'])
-        ratelimit_r = int(resp.headers['x-rate-limit-remaining'])
+            logging.warn("API status: {} - {}".format(str(status), resp.data.decode('utf-8')))
+            return []
+        ratelimit = resp.headers.get('x-rate-limit-limit')
+        ratelimit_r = resp.headers.get('x-rate-limit-remaining')
         logging.debug("API status: " + str(status))
-        logging.debug("API rate: " + str(ratelimit_r / ratelimit))
+        logging.debug("API rate: {}/{}".format(str(ratelimit_r), str(ratelimit)))
 
         now = time.gmtime()
         if interval > 0:
