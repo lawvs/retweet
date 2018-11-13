@@ -8,7 +8,6 @@ import logging
 from config import config
 from weibo import Client as WeiboClient
 import tweet
-import atexit
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - [%(levelname)s] %(message)s",
@@ -28,10 +27,6 @@ logger.info('Loaded config: {}'.format(str(config)))
 
 weiboClient = None
 tweetClient = None
-
-
-def exit_handler():
-    logger.warn('Application is ending!')
 
 
 def getWeiboClient(config):
@@ -145,5 +140,7 @@ def main():
 
 
 if __name__ == '__main__':
-    atexit.register(exit_handler)
-    main()
+    try:
+        main()
+    except Exception as e:
+        logger.exception(e)
