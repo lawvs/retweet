@@ -34,6 +34,10 @@ class WeiboAPI(object):
     def post(self, content, pic=None):
         data = {'content': content, 'st': self.st}
         if pic:
+            if not isinstance(pic, list):
+                pic = [pic]
+            pic = list(map(lambda p: self.upload_image(p).get('pic_id') if hasattr(p, 'read') else p, pic))
+            pic = ','.join(pic)
             data['picId'] = pic
         resp = requests.post(self.post_path, headers=self.headers, data=data)
         try:
