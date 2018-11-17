@@ -76,3 +76,4 @@ print(r.data).decode('utf-8')
 - [微博开放平台 - 开发文档](http://open.weibo.com/wiki)
 - 微博SDK使用[lxyu/weibo](https://github.com/lxyu/weibo)并有少量改动
 - [ozh/ozh-tweet-archiver](https://github.com/ozh/ozh-tweet-archiver)
+- 微博H5SDK使用[KoushiHime - koushihime/utils/weibo.py](https://github.com/ethe/KoushiHime/blob/0822b97588d9607143d3e5a40d5afda9f356d199/koushihime/utils/weibo.py)
