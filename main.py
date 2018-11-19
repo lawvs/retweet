@@ -119,7 +119,7 @@ def loop():
     for t in l:
         status, pic = formatTweet(t)
         logger.info('share weibo... - {}'.format(status))
-        resp = weiboClient.shareWeibo(status, pic)
+        resp = weiboClient.shareWeibo(status, pic, redirect_uri=config.WEIBO_REDIRECT_URI)
         logger.debug('shareWeibo resp - ' + str(resp))
 
 
