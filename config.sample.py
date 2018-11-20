@@ -19,6 +19,8 @@ class Config(object):
     TWITTER_BEARER_TOKEN = None
 
     # Weibo
+    # Weibo H5 cookie  https://m.weibo.cn
+    WEIBO_COOKIE = ''
     # http://open.weibo.com/wiki/
     # App ID  *Required
     WEIBO_APP_ID = '11111'
