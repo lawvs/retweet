@@ -25,7 +25,7 @@ class WeiboAPI(object):
 
     def upload_image(self, image):
         # {'name': ('filename', 'data', 'text/plain')}
-        filename = getattr(image, 'name', '')
+        filename = getattr(image, 'name', 'img')
         pauload = {
             'type': (None, 'json'),
             'pic': (filename, image, self.guess_content_type(filename)),
@@ -33,6 +33,19 @@ class WeiboAPI(object):
         }
         resp = requests.post(
             self.upload_path, headers=self.headers, files=pauload)
+        # success
+        # {
+        #   "pic_id":"PIC_ID",
+        #   "thumbnail_pic":"http:\/\/wx2.sinaimg.cn\/thumbnail\/PIC_ID.jpg",
+        #   "bmiddle_pic":"http:\/\/wx2.sinaimg.cn\/bmiddle\/PIC_ID.jpg",
+        #   "original_pic":"http:\/\/wx2.sinaimg.cn\/large\/PIC_ID.jpg"
+        # }
+
+        # fail
+        # {
+        #   'ok': 0,
+        #   'msg': '上传失败，请稍后重试'
+        # }
         return resp.json()
 
     def post(self, content, pic=None):
@@ -40,8 +53,8 @@ class WeiboAPI(object):
         if pic:
             if not isinstance(pic, list):
                 pic = [pic]
-            pic = list(map(lambda p: self.upload_image(p).get(
-                'pic_id') if hasattr(p, 'read') else p, pic))
+            pic = list(map(lambda p: self.upload_image(p).get('pic_id') if hasattr(
+                p, 'read') or isinstance(p, bytes) else p, pic))
             pic = ','.join(pic)
             data['picId'] = pic
         resp = requests.post(self.post_path, headers=self.headers, data=data)
