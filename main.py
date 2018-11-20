@@ -6,7 +6,8 @@ import time
 import datetime
 import logging
 from config import config
-from weibo import Client as WeiboClient
+import weibo
+import mweibo
 import tweet
 
 logging.basicConfig(
@@ -30,14 +31,23 @@ tweetClient = None
 
 
 def getWeiboClient(config):
-    if config.WEIBO_ACCESS_TOKEN:
-        weiboClient = WeiboClient(config.WEIBO_APP_ID, config.WEIBO_APP_SECRET, config.WEIBO_REDIRECT_URI, token={
-                                  'access_token': config.WEIBO_ACCESS_TOKEN})
+    if config.WEIBO_COOKIE:
+        logger.debug('weiboClient use WEIBO_COOKIE')
+        # weibo H5
+        weiboClient = mweibo.WeiboAPI(config.WEIBO_COOKIE)
+    elif config.WEIBO_ACCESS_TOKEN:
+        # weibo API
+        logger.debug('weiboClient use WEIBO_ACCESS_TOKEN')
+        weiboClient = weibo.Client(config.WEIBO_APP_ID, config.WEIBO_APP_SECRET, config.WEIBO_REDIRECT_URI, token={
+            'access_token': config.WEIBO_ACCESS_TOKEN})
     elif config.WEIBO_USERNAME and config.WEIBO_PASSWORD:
-        weiboClient = WeiboClient(config.WEIBO_APP_ID, config.WEIBO_APP_SECRET, config.WEIBO_REDIRECT_URI,
-                                  username=config.WEIBO_USERNAME, password=config.WEIBO_PASSWORD)
+        # weibo API + username/password
+        logger.debug('weiboClient use WEIBO_USERNAME ans WEIBO_PASSWORD')
+        weiboClient = weibo.Client(config.WEIBO_APP_ID, config.WEIBO_APP_SECRET, config.WEIBO_REDIRECT_URI,
+                                   username=config.WEIBO_USERNAME, password=config.WEIBO_PASSWORD)
     else:
-        raise('Get weiboClient fail - WEIBO_ACCESS_TOKEN not found OR (WEIBO_USERNAME and config.WEIBO_PASSWORD) not found')
+        raise Exception(
+            'Get weiboClient fail - WEIBO_COOKIE not found OR WEIBO_ACCESS_TOKEN not found OR (WEIBO_USERNAME and config.WEIBO_PASSWORD) not found')
     return weiboClient
 
 
@@ -68,40 +78,55 @@ def filterTweet(l) -> list:
     return l
 
 
-def formatTweet(t):
+def formatTweet(t) -> (str, list):
     '''
     return: tweet.full_text, extended_entities.photo
     '''
     text = t.get('full_text')
     media = t.get('extended_entities', {}).get('media', {})
     media = filter(lambda media: media.get('type') == 'photo', media)
-    photoList = list(map(lambda media: media.get('media_url_https'), media))
-
-    url = 'https://twitter.com/{}/status/{}'.format(
-        tweetClient.screenName, t.get('id'))
-    # logger.info('photo tweet -> {}'.format(url))
-    if len(photoList) > 1:
-        logging.warn('tweet 图片数量超过一张 -> {}'.format(url))
-    if len(photoList) <= 0:
-        pic = None
-    else:
-        pic = tweet.getPhoto(photoList[0], proxy=config.PROXY)
+    photoList = map(lambda media: media.get('media_url_https'), media)
+    pics = list(map(lambda link: tweet.getPhoto(
+        link, proxy=config.PROXY), photoList))
 
     tz_utc_8 = datetime.timezone(datetime.timedelta(hours=8))
     tweetTime = datetime.datetime.strptime(
         t.get('created_at'), '%a %b %d %H:%M:%S %z %Y')
     tweetTime = tweetTime.astimezone(tz_utc_8)  # change timezone
     timeStr = tweetTime.strftime('%Y.%m.%d %H:%M:%S')
-    # format weibo
 
-    def formatter(str): return config.WEIBO_FORMAT.format(
-        text=str, time=timeStr)
+    def formatter(str):
+        # format weibo
+        return config.WEIBO_FORMAT.format(text=str, time=timeStr)
     status = formatter(text)
+
+    # word count limit
     if len(status) > 140:
         logger.debug('input text more than 140 characters ' + str(len(text)))
         text = text[0:(140 - len(status) - 3)] + '...'
         status = formatter(text)
-    return status, pic
+    return status, pics
+
+
+def postWeibo(text, pics):
+    '''
+    param
+    text: str
+    pics: list
+    '''
+    if isinstance(weiboClient, weibo.Client):
+        # weibo API
+        if len(pics) > 1:
+            logging.warn('tweet 图片数量超过一张，已自动过滤为一张')
+        pic = pics[0:1]
+        resp = weiboClient.shareWeibo(
+            text, pic=pic, redirect_uri=config.WEIBO_REDIRECT_URI)
+    elif isinstance(weiboClient, mweibo.WeiboAPI):
+        # weibo H5
+        resp = weiboClient.post(text, pic=pics)
+    else:
+        raise Exception('unknown weiboClient!')
+    return resp
 
 
 def loop():
@@ -117,10 +142,10 @@ def loop():
         return
 
     for t in l:
-        status, pic = formatTweet(t)
-        logger.info('share weibo... - {}'.format(status))
-        resp = weiboClient.shareWeibo(status, pic, redirect_uri=config.WEIBO_REDIRECT_URI)
-        logger.debug('shareWeibo resp - ' + str(resp))
+        text, pics = formatTweet(t)
+        logger.info('post weibo... - {}'.format(text))
+        resp = postWeibo(text, pics)
+        logger.debug('postWeibo resp - ' + str(resp))
 
 
 def main():
