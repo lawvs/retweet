@@ -42,11 +42,15 @@ class WeiboAPI(object):
         # }
 
         # fail
+        # {'ok': 0, 'msg': 'token校验失败', 'errno': '100006'}
         # {
         #   'ok': 0,
         #   'msg': '上传失败，请稍后重试'
         # }
-        return resp.json()
+        js = resp.json()
+        if js.get('ok', 1) != 1:
+            raise WeiboPostError(resp.text)
+        return js
 
     def post(self, content, pic=None):
         data = {'content': content, 'st': self.st}
