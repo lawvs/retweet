@@ -116,17 +116,20 @@ def postWeibo(text, pics):
     '''
     if isinstance(weiboClient, weibo.Client):
         # weibo API
+        if not len(pics):
+            resp = weiboClient.shareWeibo(text, redirect_uri=config.WEIBO_REDIRECT_URI)
+            return resp
         if len(pics) > 1:
             logging.warn('tweet 图片数量超过一张，已自动过滤为一张')
-        pic = pics[0:1]
+        pic = pics[0]
         resp = weiboClient.shareWeibo(
             text, pic=pic, redirect_uri=config.WEIBO_REDIRECT_URI)
-    elif isinstance(weiboClient, mweibo.WeiboAPI):
+        return resp
+    if isinstance(weiboClient, mweibo.WeiboAPI):
         # weibo H5
         resp = weiboClient.post(text, pic=pics)
-    else:
-        raise Exception('unknown weiboClient!')
-    return resp
+        return resp
+    raise Exception('unknown weiboClient!')
 
 
 def loop():
